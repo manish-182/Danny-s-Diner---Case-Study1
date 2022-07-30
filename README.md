@@ -1,8 +1,6 @@
 # Dannys_Diner-Case Study
 
 
--- This is a solution to the Case Study #1 - Danny's Diner (8 Week SQL Challenge)
-
 -- 1. What is the total amount each customer spent at the restaurant?
 
 
