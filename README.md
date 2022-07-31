@@ -50,7 +50,7 @@
 ----------------------
 #### 3. What was the first item from the menu purchased by each customer?
 	
-	-- using row_number function to serially list the items ordered by each customer group by date
+	-- Created new table using row_number function to serially list the items ordered by each customer group by date
 
 ```sql
 	WITH items_purchase AS (
@@ -63,30 +63,7 @@
 	    sales AS s
 	)
 ```
-
-#### items_purchase (CTE Table) created from above query
-
-```markdown
-	| customer_id | order_date | product_id | item_rank |
-	|-------------|------------|------------|-----------|
-	| A           | 2021-01-01 | 1          | 1         |
-	| A           | 2021-01-01 | 2          | 2         |
-	| A           | 2021-01-07 | 2          | 3         |
-	| A           | 2021-01-10 | 3          | 4         |
-	| A           | 2021-01-11 | 3          | 5         |
-	| A           | 2021-01-11 | 3          | 6         |
-	| B           | 2021-01-01 | 2          | 1         |
-	| B           | 2021-01-02 | 2          | 2         |
-	| B           | 2021-01-04 | 1          | 3         |
-	| B           | 2021-01-11 | 1          | 4         |
-	| B           | 2021-01-16 | 3          | 5         |
-	| B           | 2021-02-01 | 3          | 6         |
-	| C           | 2021-01-01 | 3          | 1         |
-	| C           | 2021-01-01 | 3          | 2         |
-	| C           | 2021-01-07 | 3          | 3         |
-```
-
-	-- using above table to filter 1st order by each customer
+	-- using above table (CTE) to filter 1st order by each customer
 	
 ```sql	
 	SELECT 
@@ -114,10 +91,10 @@
 	--Created ta table to list the product name and  sum of no of orders. 
 
 ```sql	
-	WITH product_orders AS (
+	WITH items_purchased AS (
 	  SELECT 
 	    product_name, 
-	    count(*) AS no_of_orders 
+	    COUNT(*) AS no_of_orders 
 	  FROM 
 	    sales AS s 
 	    INNER JOIN menu AS m ON s.product_id = m.product_id 
@@ -130,31 +107,53 @@
 ```sql	
 	SELECT product_name, no_of_orders 
 	FROM
-	  product_orders 
+	  items_purchased 
 	WHERE 
-	  no_of_orders = (SELECT MAX(no_of_orders) FROM product_orders);
+	  no_of_orders = (SELECT MAX(no_of_orders) FROM items_purchased)
 ```
+
+#### Result:
+
+```markdown
+	| product_name | no_of_orders |
+	|--------------|--------------|
+	| ramen        | 8            |
+```
+
 
 ----------------------
 #### 5. Which item was the most popular for each customer?
 	
 	-- Count the items and group by customer and product
-	-- create subquery selecting max value and match cutomer to the main query to bring all customer results
+	
 
 ```sql
 	WITH cpn AS (
 		SELECT customer_id, product_name, COUNT(s.product_id) AS no_of_ord
-		FROM sales as s
-		INNER JOIN menu as m
+		FROM sales AS s
+		INNER JOIN menu AS m
 		ON s.product_id = m.product_id
 		GROUP BY customer_id, product_name
 		)
 ```
 
+	-- create subquery selecting max value and match cutomer to the main query to bring all customer results
 ```sql
 	SELECT customer_id, product_name, no_of_ord
 	FROM cpn c
 	WHERE c.no_of_ord = (SELECT MAX(no_of_ord) FROM cpn WHERE customer_id = c.customer_id);
+```
+
+#### Result:
+
+```markdown
+	| customer_id | product_name | no_of_ord |
+	|-------------|--------------|-----------|
+	| C           | ramen        | 3         |
+	| B           | sushi        | 2         |
+	| B           | curry        | 2         |
+	| B           | ramen        | 2         |
+	| A           | ramen        | 3         |
 ```
 
 ----------------------
