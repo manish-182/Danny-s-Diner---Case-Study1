@@ -48,7 +48,7 @@
 	  INNER JOIN menu AS m 
 	    ON cp.product_id = m.product_id 
 	WHERE 
-	  item_no = '1'
+	  item_no = '1';
 
 
 -- 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
@@ -72,7 +72,7 @@
 	FROM
 	  product_orders 
 	WHERE 
-	  no_of_orders = (SELECT MAX(no_of_orders) FROM product_orders)
+	  no_of_orders = (SELECT MAX(no_of_orders) FROM product_orders);
 
 
 
@@ -112,7 +112,7 @@
 
 	SELECT customer_id, product_name
 	FROM mp
-	WHERE row_num = '1'
+	WHERE row_num = '1';
 
 
 -- 7. Which item was purchased just before the customer became a member?
@@ -129,7 +129,7 @@
 		INNER JOIN menu AS m
 		ON s.product_id = m.product_id
 		WHERE order_date < join_date
-		)
+			)
 
 	-- sub query to create table showing max rank which is the last purchase by the customer
 	
@@ -141,7 +141,7 @@
 		GROUP BY customer_id
 		) maxnmp
 	ON nmp.customer_id = maxnmp.customer_id
-	AND row_num = max_num
+	AND row_num = max_num;
 
 -- 8. What is the total items and amount spent for each member before they became a member?
 
@@ -157,7 +157,7 @@
 
 	SELECT customer_id, count(product_name) tot_items, sum(price) tot_spend
 	FROM nmp
-	GROUP BY customer_id
+	GROUP BY customer_id;
 
 
 -- 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
@@ -177,7 +177,7 @@
 	FROM sales AS s
 	INNER JOIN points AS p
 	ON s.product_id = p.product_id
-	GROUP BY customer_id
+	GROUP BY customer_id;
 
 
 
@@ -199,4 +199,47 @@
 	ON s.customer_id = m2.customer_id
 	INNER JOIN menu AS m
 	ON s.product_id = m.product_id
-	GROUP BY s.customer_id
+	GROUP BY s.customer_id;
+	
+	
+--11. Join all the details to present the comprehensive view to the management.
+
+	SELECT s.customer_id, order_date, product_name, price,
+		CASE WHEN order_date >= join_date AND s.customer_id = m2.customer_id 
+			THEN 'Y'
+			ELSE 'N'
+		END AS member
+	FROM sales AS s
+	INNER JOIN menu AS m
+	ON s.product_id = m.product_id
+	FULL JOIN members AS m2
+	ON s.customer_id = m2.customer_id;
+
+--12. Ranking of customer products for members only
+	
+	--Created Table showing overall purchases seperating member and non member
+	
+	WITH overall_report AS (
+		SELECT s.customer_id, order_date, product_name, price,
+			CASE WHEN order_date >= join_date AND s.customer_id = m2.customer_id 
+				THEN 'Y'
+				ELSE 'N'
+			END AS member
+		FROM sales AS s
+		INNER JOIN menu AS m
+		ON s.product_id = m.product_id
+		FULL JOIN members AS m2
+		ON s.customer_id = m2.customer_id
+		)
+
+	--Ranking of purchases made by the members only
+	
+	SELECT *,
+		CASE WHEN member = 'Y' 
+		THEN 
+			RANK() OVER(PARTITION BY customer_id, member ORDER BY order_date)
+		ELSE null
+		END AS ranking
+	FROM overall_report;
+
+
