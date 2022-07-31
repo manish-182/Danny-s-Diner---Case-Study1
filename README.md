@@ -6,12 +6,22 @@
 ```sql
 	SELECT 
 	  customer_id, 
-	  SUM(price) as tot_amt
+	  SUM(price) AS tot_amt
 	FROM 
 	  sales AS s 
-	  INNER JOIN menu AS m on s.product_id = m.product_id
+	  INNER JOIN menu AS m ON s.product_id = m.product_id
 	GROUP BY 
 	  customer_id;
+```
+
+#### Result:
+
+```markdown
+	| customer_id | tot_amt |
+	|-------------|---------|
+	| A           | 76      |
+	| B           | 74      |
+	| C           | 36      |
 ```
 
 ----------------------
@@ -27,21 +37,53 @@
 	  customer_id;
 ```
 
+#### Result:
+
+```markdown
+	| customer_id | no_of_visit |
+	|-------------|-------------|
+	| A           | 4           |
+	| B           | 6           |
+	| C           | 2           |
+```
+
 ----------------------
 #### 3. What was the first item from the menu purchased by each customer?
 	
 	-- using row_number function to serially list the items ordered by each customer group by date
 
 ```sql
-	WITH cp AS (
+	WITH items_purchase AS (
 	  SELECT 
 	    *, 
 	    ROW_NUMBER() over(
 	      PARTITION BY customer_id 
-	      ORDER BY order_date) AS item_no 
+	      ORDER BY order_date) AS item_rank 
 	  FROM 
 	    sales AS s
 	)
+```
+
+#### items_purchase (CTE Table) created from above query
+
+```markdown
+	| customer_id | order_date | product_id | item_rank |
+	|-------------|------------|------------|-----------|
+	| A           | 2021-01-01 | 1          | 1         |
+	| A           | 2021-01-01 | 2          | 2         |
+	| A           | 2021-01-07 | 2          | 3         |
+	| A           | 2021-01-10 | 3          | 4         |
+	| A           | 2021-01-11 | 3          | 5         |
+	| A           | 2021-01-11 | 3          | 6         |
+	| B           | 2021-01-01 | 2          | 1         |
+	| B           | 2021-01-02 | 2          | 2         |
+	| B           | 2021-01-04 | 1          | 3         |
+	| B           | 2021-01-11 | 1          | 4         |
+	| B           | 2021-01-16 | 3          | 5         |
+	| B           | 2021-02-01 | 3          | 6         |
+	| C           | 2021-01-01 | 3          | 1         |
+	| C           | 2021-01-01 | 3          | 2         |
+	| C           | 2021-01-07 | 3          | 3         |
 ```
 
 	-- using above table to filter 1st order by each customer
@@ -50,11 +92,20 @@
 	SELECT 
 	  customer_id, 
 	  product_name 
-	FROM cp 
+	FROM items_purchase AS ip 
 	  INNER JOIN menu AS m 
-	    ON cp.product_id = m.product_id 
+	    ON ip.product_id = m.product_id 
 	WHERE 
-	  item_no = '1';
+	  item_rank = '1'
+```
+
+#### Result:
+
+```markdown
+	| customer_id | product_name |
+	|-------------|--------------|
+	| A           | sushi        |
+	| B           | curry        |
 ```
 
 ----------------------
