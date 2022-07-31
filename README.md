@@ -224,7 +224,7 @@
 	AND item_rank = max_rank;
 ```
 
-#### Result: This is interesting! Customers bought the same item just before and after being the member. Does it mean the choosen items drive the membership? OR there are other factors?? 
+#### Result:  
 
 ```markdown
 	| A | curry |
@@ -235,6 +235,8 @@
 ----------------------
 #### 8. What is the total items and amount spent for each member before they became a member?
 
+	--Table with items purchased and amount spent before they become member. 
+	
 ```sql
 	WITH nmp AS (
 		SELECT s.customer_id, order_date, join_date, product_name, price
@@ -246,17 +248,26 @@
 		WHERE order_date < join_date
 		)
 ```
+	--Used aggregation to find total items purchased and total amount spent by each customer who became member. 
 
 ```sql
 	SELECT customer_id, count(product_name) tot_items, sum(price) tot_spend
 	FROM nmp
 	GROUP BY customer_id;
 ```
+#### Result:  
+
+```markdown
+	| customer_id | tot_items | tot_spend |
+	|-------------|-----------|-----------|
+	| A           | 2         | 25        |
+	| B           | 3         | 40        |
+```
 
 ----------------------
 #### 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
 	
-	-- used case logic to dictate points for each product type based on policy
+	-- Created new points table using case logic to dictate points for each product type based on policy.
 
 ```sql
 	WITH points AS (
@@ -268,13 +279,24 @@
 		FROM menu
 		)
 ```
-
+	
+	--Points table is joined with sales table to find total points for each customer. 
 ```sql
 	SELECT customer_id, SUM(points) AS tot_points
 	FROM sales AS s
 	INNER JOIN points AS p
 	ON s.product_id = p.product_id
 	GROUP BY customer_id;
+```
+
+#### Result:  
+
+```markdown
+	| customer_id | tot_points |
+	|-------------|------------|
+	| A           | 860        |
+	| B           | 940        |
+	| C           | 360        |
 ```
 
 ----------------------
