@@ -302,8 +302,17 @@
 ----------------------
 #### 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
 
-	--Used case logic to categorize points into 4 categories
-	-- calculated reward points and aggregated customerwise
+
+	-- Created new points table using case logic to dictate points for each product type based on policy.
+	
+* For items purchased within a week after being a member AND if purchased within January = **20 pts**
+* For purchase of 'Sushi' after being member = **20 pts**
+* For purchase of other items ~~'Sushi'~~  after being member = **10 pts** 
+* For purchase made before being member = **0 pts**
+
+```	
+-- calculated reward points and aggregated customerwise.
+```
 
 ```sql
 	SELECT 
@@ -320,7 +329,17 @@
 	INNER JOIN menu AS m
 	ON s.product_id = m.product_id
 	GROUP BY s.customer_id;
-```	
+```
+
+#### Result:  
+
+```markdown
+	| customer_id | points |
+	|-------------|--------|
+	| A           | 1020   |
+	| B           | 440    |
+```
+
 
 ----------------------
 #### 11. Join all the details to present the comprehensive view to the management.
@@ -338,10 +357,32 @@
 	ON s.customer_id = m2.customer_id;
 ```
 
+#### Result:  
+
+```markdown
+	| customer_id | order_date | product_name | price | member |
+	|-------------|------------|--------------|-------|--------|
+	| A           | 2021-01-01 | sushi        | 10    | N      |
+	| A           | 2021-01-01 | curry        | 15    | N      |
+	| A           | 2021-01-07 | curry        | 15    | Y      |
+	| A           | 2021-01-10 | ramen        | 12    | Y      |
+	| A           | 2021-01-11 | ramen        | 12    | Y      |
+	| A           | 2021-01-11 | ramen        | 12    | Y      |
+	| B           | 2021-01-01 | curry        | 15    | N      |
+	| B           | 2021-01-02 | curry        | 15    | N      |
+	| B           | 2021-01-04 | sushi        | 10    | N      |
+	| B           | 2021-01-11 | sushi        | 10    | Y      |
+	| B           | 2021-01-16 | ramen        | 12    | Y      |
+	| B           | 2021-02-01 | ramen        | 12    | Y      |
+	| C           | 2021-01-01 | ramen        | 12    | N      |
+	| C           | 2021-01-01 | ramen        | 12    | N      |
+	| C           | 2021-01-07 | ramen        | 12    | N      |
+```
+
 ----------------------
 #### 12. Ranking of customer products for members only
 	
-	--Created Table showing overall purchases seperating member and non member
+	--Created Table showing all purchases seperating member and non member purchases.
 
 ```sql
 	WITH overall_report AS (
@@ -357,7 +398,7 @@
 		ON s.customer_id = m2.customer_id
 		)
 ```
-	--Ranking of purchases made by the members only
+	--Ranking of purchases made by the members only. 
 
 ```sql
 	SELECT *,
@@ -368,4 +409,28 @@
 		END AS ranking
 	FROM overall_report;
 ```
+
+#### Result:  
+
+```markdown
+	| customer_id | order_date | product_name | price | member | ranking |
+	|-------------|------------|--------------|-------|--------|---------|
+	| A           | 2021-01-01 | sushi        | 10    | N      | NULL    |
+	| A           | 2021-01-01 | curry        | 15    | N      | NULL    |
+	| A           | 2021-01-07 | curry        | 15    | Y      | 1       |
+	| A           | 2021-01-10 | ramen        | 12    | Y      | 2       |
+	| A           | 2021-01-11 | ramen        | 12    | Y      | 3       |
+	| A           | 2021-01-11 | ramen        | 12    | Y      | 3       |
+	| B           | 2021-01-01 | curry        | 15    | N      | NULL    |
+	| B           | 2021-01-02 | curry        | 15    | N      | NULL    |
+	| B           | 2021-01-04 | sushi        | 10    | N      | NULL    |
+	| B           | 2021-01-11 | sushi        | 10    | Y      | 1       |
+	| B           | 2021-01-16 | ramen        | 12    | Y      | 2       |
+	| B           | 2021-02-01 | ramen        | 12    | Y      | 3       |
+	| C           | 2021-01-01 | ramen        | 12    | N      | NULL    |
+	| C           | 2021-01-01 | ramen        | 12    | N      | NULL    |
+	| C           | 2021-01-07 | ramen        | 12    | N      | NULL    |
+```
+
+
 
