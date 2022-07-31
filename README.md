@@ -160,11 +160,11 @@
 #### 6. Which item was purchased first by the customer after they became a member?
 	
 	--created table joining sales and members table and filtered for transactions on and after the date of membership, 
-	--this is then ranked by using window function by customer serially
-	-- the 1st purchase will have the rank 1 and is filtered on second query
+	--this is then ranked by using window function by customer serially.
+	
 	
 ```sql	
-	WITH mp AS (
+	WITH member_sales AS (
 		SELECT s.customer_id, order_date, join_date, product_name,
 		ROW_NUMBER() OVER(PARTITION BY s.customer_id ORDER BY order_date) AS row_num
 		FROM sales AS s
@@ -175,23 +175,32 @@
 		WHERE order_date >= join_date
 		)
 ```
+	-- the 1st purchase will have the rank 1 and is filtered on second query.
 
 ```sql
 	SELECT customer_id, product_name
-	FROM mp
+	FROM member_sales
 	WHERE row_num = '1';
+```
+
+#### Result:
+
+```markdown
+	| A | curry |
+	|---|-------|
+	| B | sushi |
 ```
 
 ----------------------
 #### 7. Which item was purchased just before the customer became a member?
 	
 	--created table joining sales and members table and filtered for transactions before the date of membership, 
-	--this is then ranked by using window function by customer serially
+	--this is then ranked by using window function by customer and order date serially.
 
 ```sql
 	WITH nmp AS (
 		SELECT s.customer_id, order_date, join_date, product_name,
-		ROW_NUMBER() OVER(PARTITION BY s.customer_id ORDER BY order_date) AS row_num
+		ROW_NUMBER() OVER(PARTITION BY s.customer_id ORDER BY order_date) AS item_rank
 		FROM sales AS s
 		INNER JOIN members AS m1
 		ON s.customer_id = m1.customer_id
@@ -200,18 +209,27 @@
 		WHERE order_date < join_date
 			)
 ```
-	-- sub query to create table showing max rank which is the last purchase by the customer
+	-- sub query to create table showing max rank which is then joined to find the last item purchased. 
+	
 
 ```sql
 	SELECT nmp.customer_id, product_name
 	FROM nmp
 	INNER JOIN (
-		SELECT customer_id, MAX(row_num) AS max_num
+		SELECT customer_id, MAX(item_rank) AS max_rank
 		FROM nmp
 		GROUP BY customer_id
 		) maxnmp
 	ON nmp.customer_id = maxnmp.customer_id
-	AND row_num = max_num;
+	AND item_rank = max_rank;
+```
+
+#### Result: This is interesting! Customers bought the same item just before and after being the member. Does it mean the choosen items drive the membership? OR there are other factors?? 
+
+```markdown
+	| A | curry |
+	|---|-------|
+	| B | sushi |
 ```
 
 ----------------------
