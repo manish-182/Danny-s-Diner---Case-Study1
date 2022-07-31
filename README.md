@@ -1,5 +1,9 @@
 ### Dannys_Diner-Case Study
+This challange and data set is provided by <a href="https://www.linkedin.com/in/datawithdanny/?originalSubdomain=au/"> Danny Ma </a>.
+<p>Want to know more about 8 Week SQL Challenge case study? <a href="https://8weeksqlchallenge.com/case-study-1/"> Click Here </a></p>
+
 ----------------------
+
 
 #### 1. What is the total amount each customer spent at the restaurant?
 
