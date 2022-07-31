@@ -1,9 +1,9 @@
-# Dannys_Diner-Case Study
+### Dannys_Diner-Case Study
+----------------------
 
+#### 1. What is the total amount each customer spent at the restaurant?
 
--- 1. What is the total amount each customer spent at the restaurant?
-
-
+```sql
 	SELECT 
 	  customer_id, 
 	  SUM(price) as tot_amt
@@ -12,10 +12,12 @@
 	  INNER JOIN menu AS m on s.product_id = m.product_id
 	GROUP BY 
 	  customer_id;
+```
 
+----------------------
+#### 2. How many days has each customer visited the restaurant?
 
--- 2. How many days has each customer visited the restaurant?
-
+```sql
 	SELECT 
 	  customer_id, 
 	  count (distinct order_date) as no_of_visit
@@ -23,12 +25,14 @@
 	  sales as s 
 	GROUP BY
 	  customer_id;
+```
 
-
--- 3. What was the first item from the menu purchased by each customer?
+----------------------
+#### 3. What was the first item from the menu purchased by each customer?
 	
 	-- using row_number function to serially list the items ordered by each customer group by date
-	
+
+```sql
 	WITH cp AS (
 	  SELECT 
 	    *, 
@@ -38,9 +42,11 @@
 	  FROM 
 	    sales AS s
 	)
-	
+```
+
 	-- using above table to filter 1st order by each customer
 	
+```sql	
 	SELECT 
 	  customer_id, 
 	  product_name 
@@ -49,12 +55,14 @@
 	    ON cp.product_id = m.product_id 
 	WHERE 
 	  item_no = '1';
+```
 
-
--- 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
+----------------------
+#### 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
 	
 	--Created ta table to list the product name and  sum of no of orders. 
-	
+
+```sql	
 	WITH product_orders AS (
 	  SELECT 
 	    product_name, 
@@ -65,22 +73,24 @@
 	  GROUP BY 
 	    product_name
 	)
-
+```
 	-- Filtering max order from the table created
-	
+
+```sql	
 	SELECT product_name, no_of_orders 
 	FROM
 	  product_orders 
 	WHERE 
 	  no_of_orders = (SELECT MAX(no_of_orders) FROM product_orders);
+```
 
-
-
--- 5. Which item was the most popular for each customer?
+----------------------
+#### 5. Which item was the most popular for each customer?
 	
 	-- Count the items and group by customer and product
 	-- create subquery selecting max value and match cutomer to the main query to bring all customer results
 
+```sql
 	WITH cpn AS (
 		SELECT customer_id, product_name, COUNT(s.product_id) AS no_of_ord
 		FROM sales as s
@@ -88,17 +98,22 @@
 		ON s.product_id = m.product_id
 		GROUP BY customer_id, product_name
 		)
+```
+
+```sql
 	SELECT customer_id, product_name, no_of_ord
 	FROM cpn c
 	WHERE c.no_of_ord = (SELECT MAX(no_of_ord) FROM cpn WHERE customer_id = c.customer_id);
+```
 
-
--- 6. Which item was purchased first by the customer after they became a member?
+----------------------
+#### 6. Which item was purchased first by the customer after they became a member?
 	
 	--created table joining sales and members table and filtered for transactions on and after the date of membership, 
 	--this is then ranked by using window function by customer serially
 	-- the 1st purchase will have the rank 1 and is filtered on second query
 	
+```sql	
 	WITH mp AS (
 		SELECT s.customer_id, order_date, join_date, product_name,
 		ROW_NUMBER() OVER(PARTITION BY s.customer_id ORDER BY order_date) AS row_num
@@ -109,17 +124,21 @@
 		ON s.product_id = m.product_id
 		WHERE order_date >= join_date
 		)
+```
 
+```sql
 	SELECT customer_id, product_name
 	FROM mp
 	WHERE row_num = '1';
+```
 
-
--- 7. Which item was purchased just before the customer became a member?
+----------------------
+#### 7. Which item was purchased just before the customer became a member?
 	
 	--created table joining sales and members table and filtered for transactions before the date of membership, 
 	--this is then ranked by using window function by customer serially
 
+```sql
 	WITH nmp AS (
 		SELECT s.customer_id, order_date, join_date, product_name,
 		ROW_NUMBER() OVER(PARTITION BY s.customer_id ORDER BY order_date) AS row_num
@@ -130,9 +149,10 @@
 		ON s.product_id = m.product_id
 		WHERE order_date < join_date
 			)
-
+```
 	-- sub query to create table showing max rank which is the last purchase by the customer
-	
+
+```sql
 	SELECT nmp.customer_id, product_name
 	FROM nmp
 	INNER JOIN (
@@ -142,9 +162,12 @@
 		) maxnmp
 	ON nmp.customer_id = maxnmp.customer_id
 	AND row_num = max_num;
+```
 
--- 8. What is the total items and amount spent for each member before they became a member?
+----------------------
+#### 8. What is the total items and amount spent for each member before they became a member?
 
+```sql
 	WITH nmp AS (
 		SELECT s.customer_id, order_date, join_date, product_name, price
 		FROM sales AS s
@@ -154,16 +177,20 @@
 		ON s.product_id = m.product_id
 		WHERE order_date < join_date
 		)
+```
 
+```sql
 	SELECT customer_id, count(product_name) tot_items, sum(price) tot_spend
 	FROM nmp
 	GROUP BY customer_id;
+```
 
-
--- 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
+----------------------
+#### 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
 	
 	-- used case logic to dictate points for each product type based on policy
 
+```sql
 	WITH points AS (
 		SELECT * , 
 		CASE WHEN product_name = 'sushi' 
@@ -172,20 +199,23 @@
 		END AS points
 		FROM menu
 		)
+```
 
+```sql
 	SELECT customer_id, SUM(points) AS tot_points
 	FROM sales AS s
 	INNER JOIN points AS p
 	ON s.product_id = p.product_id
 	GROUP BY customer_id;
+```
 
-
-
--- 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
+----------------------
+#### 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
 
 	--Used case logic to categorize points into 4 categories
 	-- calculated reward points and aggregated customerwise
 
+```sql
 	SELECT 
 		s.customer_id, 
 		SUM (
@@ -200,10 +230,12 @@
 	INNER JOIN menu AS m
 	ON s.product_id = m.product_id
 	GROUP BY s.customer_id;
-	
-	
---11. Join all the details to present the comprehensive view to the management.
+```	
 
+----------------------
+#### 11. Join all the details to present the comprehensive view to the management.
+
+```sql
 	SELECT s.customer_id, order_date, product_name, price,
 		CASE WHEN order_date >= join_date AND s.customer_id = m2.customer_id 
 			THEN 'Y'
@@ -214,11 +246,14 @@
 	ON s.product_id = m.product_id
 	FULL JOIN members AS m2
 	ON s.customer_id = m2.customer_id;
+```
 
---12. Ranking of customer products for members only
+----------------------
+#### 12. Ranking of customer products for members only
 	
 	--Created Table showing overall purchases seperating member and non member
-	
+
+```sql
 	WITH overall_report AS (
 		SELECT s.customer_id, order_date, product_name, price,
 			CASE WHEN order_date >= join_date AND s.customer_id = m2.customer_id 
@@ -231,9 +266,10 @@
 		FULL JOIN members AS m2
 		ON s.customer_id = m2.customer_id
 		)
-
+```
 	--Ranking of purchases made by the members only
-	
+
+```sql
 	SELECT *,
 		CASE WHEN member = 'Y' 
 		THEN 
@@ -241,5 +277,5 @@
 		ELSE null
 		END AS ranking
 	FROM overall_report;
-
+```
 
